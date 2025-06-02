@@ -2,7 +2,7 @@ use std::collections::HashSet;
 use std::ffi::CString;
 use std::fmt::Debug;
 use std::path::Path;
-use chrono::{DateTime, Local};
+use chrono::{DateTime, Local, NaiveDate, Weekday};
 // from the LinkedIn course: https://www.linkedin.com/learning/level-up-rust
 use num::{Integer, Num};
 
@@ -378,6 +378,24 @@ fn sum_with_missing_v2(elements: Vec<Option<i32>>) -> i32 {
         .sum::<i32>()
 }
 
+//===================================================================================
+// 10. check weeks between 2 dates
+// requirements: weeks_between(a: &str, b: &str) -> i32
+// yyyy-mm-dd
+// if b < a, return negative number
+// chrono crate
+// handle errors
+
+fn weeks_between(a: &str, b: &str) -> i32 {
+    let date_a = NaiveDate::parse_from_str(a, "%Y-%m-%d").unwrap();
+    let date_b = NaiveDate::parse_from_str(b, "%Y-%m-%d").unwrap();
+    (date_b.week(Weekday::Mon).first_day() - date_a.week(Weekday::Mon).first_day()).num_weeks() as i32
+}
+
+//===================================================================================
+// 11. 
+
+
 
 //===================================================================================
 
@@ -440,4 +458,9 @@ fn main() {
     let vec: Vec<Option<i32>> = vec![None, None, None, None];
     let sum_missing = sum_with_missing_v2(vec);
     println!("Sum missing value: {}", sum_missing);
+
+    let date_a = "2000-01-01";
+    let date_b = "1999-01-01";
+    println!("Weeks between: {}", weeks_between(date_a, date_b));
+    
 }
