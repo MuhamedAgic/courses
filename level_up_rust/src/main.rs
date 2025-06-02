@@ -2,6 +2,7 @@
 
 use std::ffi::CString;
 use std::fmt::Debug;
+use std::fs::{File, OpenOptions};
 use std::path::Path;
 use std::str::FromStr;
 use chrono::{DateTime, Local, NaiveDate, Weekday};
@@ -478,6 +479,42 @@ impl std::fmt::Display for IsbnError {
     }
 }
 
+//===================================================================================
+// 11. validate file exists
+trait FileMetadata {
+    fn exists(&self) -> bool;
+    fn is_writable(&self) -> bool;
+    fn is_readable(&self) -> bool;
+}
+
+impl FileMetadata for std::path::Path {
+    fn exists(&self) -> bool {
+        std::path::Path::exists(self)
+    }
+    fn is_writable(&self) -> bool {
+        if !self.exists() {
+            return false;
+        }
+        let res = OpenOptions::new().write(true).open(self);
+        if let Ok(mut file) = res {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    fn is_readable(&self) -> bool {
+        if !self.exists() {
+            return false;
+        }
+        let res = OpenOptions::new().read(true).open(self);
+        if let Ok(mut file) = res {
+            return true;
+        } else {
+            return false;
+        }
+    }
+}
+
 
 //===================================================================================
 
@@ -549,5 +586,12 @@ fn main() {
     let isbn = Isbn::from_str("1999-01-01-0023401324-0123413240");
     let isbn = Isbn::from_str("978-3-16-148410-0");
     println!("Isbn number parsed: {:?}", isbn);
+    
+    let path_to_file = std::path::Path::new("./src/a.txt");
+    println!("Does file exist? {}" , path_to_file.exists());
+    println!("Is file readable? {}" , path_to_file.is_readable());
+    println!("Is file writable? {}" , path_to_file.is_writable());
+    
+    
     
 }
