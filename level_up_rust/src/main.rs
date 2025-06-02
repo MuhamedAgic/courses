@@ -1,10 +1,10 @@
-use std::collections::HashSet;
+// from the LinkedIn course: https://www.linkedin.com/learning/level-up-rust
+
 use std::ffi::CString;
 use std::fmt::Debug;
 use std::path::Path;
+use std::str::FromStr;
 use chrono::{DateTime, Local, NaiveDate, Weekday};
-// from the LinkedIn course: https://www.linkedin.com/learning/level-up-rust
-use num::{Integer, Num};
 
 // 1. Calulate the median
 fn my_median(elements: &Vec<f32>) -> Option<f32> {
@@ -393,8 +393,90 @@ fn weeks_between(a: &str, b: &str) -> i32 {
 }
 
 //===================================================================================
-// 11. 
+// 11. validate ISBN number
+// requirements: std::fmt::FromStr trait for the isbn number
+// validate digits
+// create appropriate error type
+// std fmt fromstr trait requires that you define an error type
+// input too, long, too short, or failed checksum
+// check digits by: mul each num by pre-assigned weights
+// reduce sum to single digit, start with 10, substr the remainder of dividing the sum by 10
 
+#[derive(Debug)]
+struct Isbn {
+    raw: String,
+    digits: Vec<u8>
+}
+
+fn calculate_isbn_checksum(digits: &Vec<u8>) -> Option<u8> {
+    if digits.is_empty() {
+        return None;
+    }
+    
+    let weighted_sum = digits
+        .iter()
+        .enumerate()
+        .map(|(i, digit)| {
+            if i % 2 == 0 {
+                digit * 1
+            } else {
+                digit * 3
+            }
+        })
+        .sum::<u8>();
+
+    let checkum = 10 - (weighted_sum % 10);
+    Some(checkum % 10)
+}
+impl FromStr for Isbn {
+    type Err = IsbnError;
+    
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut digits: Vec<u8> = s
+            .chars()
+            .filter_map(|c| c.to_digit(10).map(|d| d as u8))
+            .collect();
+        
+        if digits.len() > 13 {
+            return Err(IsbnError::TooLong)
+        } else if digits.len() < 13 {
+            return Err(IsbnError::TooShort)
+        }
+
+        // remove the hyphens
+        let last_digit = digits.pop();
+        
+        let isbn_checksum = calculate_isbn_checksum(&digits);
+        if isbn_checksum.is_none() {
+            return Err(IsbnError::InvalidChecksum)
+        }
+        
+        if isbn_checksum.unwrap() > 9 
+            || isbn_checksum.unwrap() < 0 
+            || last_digit != isbn_checksum {
+            return Err(IsbnError::InvalidChecksum)
+        }
+        
+        Ok(Isbn {raw: s.to_string(), digits: digits})
+    }
+}
+
+#[derive(Debug)]
+enum IsbnError {
+    TooLong,
+    TooShort,
+    InvalidChecksum
+}
+
+impl std::fmt::Display for IsbnError {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            IsbnError::TooLong => write!(f, "Isbn number too long"),
+            IsbnError::TooShort => write!(f, "Isbn number too short"),
+            IsbnError::InvalidChecksum => write!(f, "Invalid isbn checksum")
+        }
+    }
+}
 
 
 //===================================================================================
@@ -462,5 +544,10 @@ fn main() {
     let date_a = "2000-01-01";
     let date_b = "1999-01-01";
     println!("Weeks between: {}", weeks_between(date_a, date_b));
+
+    let isbn = Isbn::from_str("1999-01-01");
+    let isbn = Isbn::from_str("1999-01-01-0023401324-0123413240");
+    let isbn = Isbn::from_str("978-3-16-148410-0");
+    println!("Isbn number parsed: {:?}", isbn);
     
 }
