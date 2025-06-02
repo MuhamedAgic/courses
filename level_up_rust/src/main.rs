@@ -502,6 +502,46 @@ impl FileMetadata for std::path::Path {
     }
 }
 
+//===================================================================================
+// 12. interpret rgb hex color
+// parse string to rust type color
+// requirements: datastructure rgb
+// implement rgb channels using trait from sample code
+// implement fromStr for rgb
+
+#[derive(Debug)]
+struct Rgb {
+    r: u8,
+    g: u8,
+    b: u8
+}
+
+#[derive(Debug)]
+enum ParseColorError {
+    NoLeadningHash,
+    InvalidHexLength,
+    InvalidHexDigit
+}
+impl FromStr for Rgb {
+    type Err = ParseColorError;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let hex = s.strip_prefix("#").ok_or(ParseColorError::NoLeadningHash)?;
+        
+        if hex.len() != 6 {
+            return Err(ParseColorError::InvalidHexLength);
+        }
+
+        let r = u8::from_str_radix(&hex[0..2], 16).map_err(|_| ParseColorError::InvalidHexDigit)?;
+        let g = u8::from_str_radix(&hex[2..4], 16).map_err(|_| ParseColorError::InvalidHexDigit)?;
+        let b = u8::from_str_radix(&hex[4..6], 16).map_err(|_| ParseColorError::InvalidHexDigit)?;
+        Ok(Rgb{r, g, b})
+    }
+}
+
+
+//===================================================================================
+// 13. run length encoding
+
 
 //===================================================================================
 
@@ -578,7 +618,12 @@ fn main() {
     println!("Does file exist? {}" , path_to_file.exists());
     println!("Is file readable? {}" , path_to_file.is_readable());
     println!("Is file writable? {}" , path_to_file.is_writable());
-    
+
+    let color = String::from("#3e9841");
+    // let color = String::from("#3g9841");
+    // let color = String::from("3g9841");
+    let rgb = Rgb::from_str(&color);
+    println!("Parsed Rgb: {:?}", rgb);
     
     
 }
