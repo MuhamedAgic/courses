@@ -2,6 +2,7 @@
 
 use std::ffi::CString;
 use std::fmt::Debug;
+use std::fs;
 use std::fs::{File, OpenOptions};
 use std::path::Path;
 use std::str::FromStr;
@@ -489,29 +490,15 @@ trait FileMetadata {
 
 impl FileMetadata for std::path::Path {
     fn exists(&self) -> bool {
-        std::path::Path::exists(self)
+        self.exists()
     }
     fn is_writable(&self) -> bool {
-        if !self.exists() {
-            return false;
-        }
-        let res = OpenOptions::new().write(true).open(self);
-        if let Ok(mut file) = res {
-            return true;
-        } else {
-            return false;
-        }
+        fs::metadata(self)
+            .map(|m| !m.permissions().readonly())
+            .unwrap_or(false)
     }
     fn is_readable(&self) -> bool {
-        if !self.exists() {
-            return false;
-        }
-        let res = OpenOptions::new().read(true).open(self);
-        if let Ok(mut file) = res {
-            return true;
-        } else {
-            return false;
-        }
+        fs::File::open(self).is_ok()
     }
 }
 
