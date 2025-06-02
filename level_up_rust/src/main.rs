@@ -105,6 +105,33 @@ fn my_info<T: std::fmt::Display>(text: &T) {
     println!("{}", text);
 }
 
+//===================================================================================
+// 4. Case insensitive sort
+// sort usernames, ignore case of any letters within them
+// requirements: implement sort_usernames(&mut users)
+// sorted in place
+// accept all unicode chars
+
+fn my_sort_usernames(users: &mut Vec<&str>) {
+    users.sort_by(|a, b| {
+        a.to_lowercase().cmp(&b.to_lowercase())
+    });
+}
+
+
+fn courses_sort_usernames<T: AsRef<str>>(users: &mut Vec<T>) {
+    users.sort_by(|a, b| {
+        a.as_ref()
+            .to_lowercase()
+            .cmp(&b.as_ref().to_lowercase())
+    });
+}
+
+fn courses_sort_usernames_v2<T: AsRef<str>>(users: &mut Vec<T>) {
+    users.sort_by_cached_key(|a| { 
+        a.as_ref().to_lowercase()  // cached key: once per item in list
+    });
+}
     
 fn main() {
     let vec_f32: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0, 1000.0, 1001.0];
@@ -128,7 +155,13 @@ fn main() {
     my_info(&c_string.to_str().unwrap());
     my_info(&path.to_str().unwrap());
     
-    
-    
-    
+    let mut usernames = vec!["alice", "Bob", "CaRol"];
+    my_sort_usernames(&mut usernames);
+    println!("My sort usernames: {:?}", usernames);
+    let mut usernames = vec!["alice", "Bob", "CaRol"];
+    courses_sort_usernames(&mut usernames);
+    println!("Courses sort usernames: {:?}", usernames);
+    let mut usernames = vec!["alice", "Bob", "CaRol"];
+    courses_sort_usernames_v2(&mut usernames);
+    println!("Courses sort usernames v2: {:?}", usernames);
 }
