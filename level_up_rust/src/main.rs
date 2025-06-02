@@ -1,6 +1,8 @@
 use std::collections::HashSet;
 use std::ffi::CString;
+use std::fmt::Debug;
 use std::path::Path;
+use chrono::{DateTime, Local};
 // from the LinkedIn course: https://www.linkedin.com/learning/level-up-rust
 use num::{Integer, Num};
 
@@ -294,6 +296,67 @@ impl Hand {
     }
 }
 
+//===================================================================================
+// 7. check deadline
+// requirements
+// Design importantEvent data structure
+// must have name and date fields
+// implement Deadline trait for ImportantEvent
+// use chrono 
+
+struct ImportantEvent {
+    name: String,
+    date: DateTime<Local>
+}
+
+trait Deadline {
+    fn is_passed(&self) -> bool;
+}
+
+impl Deadline for ImportantEvent {
+    fn is_passed(&self) -> bool {
+        println!("event time: {}, time now: {}", self.date, Local::now());
+        Local::now() > self.date
+    }
+}
+
+//===================================================================================
+// 8. temperature conversion
+// add to_celcius and to_farenheit
+
+#[derive(Debug, PartialOrd, PartialEq)]
+enum Scale {
+    Celcius,
+    Farenheit
+}
+
+#[derive(Debug)]
+struct Temparature {
+    degrees: f32,
+    scale: Scale
+}
+
+impl Temparature {
+    fn to_celcius(&mut self) {
+        match self.scale {
+            Scale::Celcius => (),
+            Scale::Farenheit => {
+                self.degrees = self.degrees * 9.0 / 5.0 + 32.0;
+                self.scale = Scale::Farenheit;
+            }
+        }
+    }
+
+    fn to_farenheit(&mut self) {
+        match self.scale {
+            Scale::Farenheit => (),
+            Scale::Celcius => {
+                self.degrees = (self.degrees - 32.0) * 5.0 / 9.0;
+                self.scale = Scale::Celcius;
+            }
+        }
+    }
+}
 
 
 //===================================================================================
@@ -343,8 +406,12 @@ fn main() {
     let hand = Hand { cards: hand };
     println!("Hand has value: {}", hand.value());
     
+    let ie = ImportantEvent{name: "Jack".to_string(), date: Local::now()};
+    println!("Is passed event? {}", ie.is_passed());
     
-    
-    
+    let mut t = Temparature {degrees: 3.14, scale: Scale::Celcius};
+    println!("Temparature is degrees Celsius: {:?}", t);
+    t.to_farenheit();
+    println!("Temparature is Farenheit: {:?}", t);
     
 }
