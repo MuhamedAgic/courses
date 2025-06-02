@@ -132,7 +132,107 @@ fn courses_sort_usernames_v2<T: AsRef<str>>(users: &mut Vec<T>) {
         a.as_ref().to_lowercase()  // cached key: once per item in list
     });
 }
+
+//===================================================================================
+// 5. Convert text to morse code
+// requirements: implement the morsecode trait for String
+// morsecode is defined in sample code
+// skip invalid input chars
+// ignore case
+
+trait MorseCode {
+    fn to_morse_code(&self) -> Message;
+}
+
+type Message = Vec<Letter>;
+type Letter = Vec<Pulse>;
+enum Pulse {
+    Short,
+    Long
+}
+
+fn letter_to_pulse_code(char: char) -> Option<Letter> {
+    match char {
+        'a' => {
+            let letter = vec![
+                Pulse::Long,
+                Pulse::Short
+            ];
+            Some(letter)
+        }
+        'b' => {
+            let letter = vec![
+                Pulse::Long,
+                Pulse::Short,
+                Pulse::Short,
+                Pulse::Short
+            ];
+            Some(letter)
+        }
+        'c' => {
+            let letter = vec![
+                Pulse::Long,
+                Pulse::Short,
+                Pulse::Long,
+                Pulse::Short
+            ];
+            Some(letter)
+        }
+        _ => None
+    }
+}
+
+// forgot to implement how to print stuff
+impl std::fmt::Display for Pulse {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        match self {
+            Pulse::Short => write!(f, "."),
+            Pulse::Long => write!(f, "_")
+        }
+    }
+}
+
+fn print_morse_code(morse_code: &Message) {
+    for letter in morse_code.iter() {
+        for pulse in letter.iter() {
+            print!("{}", pulse);
+        }
+        print!(" ");
+    }
+}
     
+
+// my version
+impl MorseCode for String {
+    fn to_morse_code(&self) -> Message {
+        let mut message = Message::new();
+        for char in self.chars() {
+            let morse_code = match char { 
+                'a'..'z' => {
+                    if let Some(letter) = letter_to_pulse_code(char) {
+                        letter
+                    } else {
+                        Letter::new()
+                    }
+                },
+                'A'..'Z' => {
+                    let char = char.to_ascii_lowercase();
+                    if let Some(letter) = letter_to_pulse_code(char) {
+                        letter
+                    } else {
+                        Letter::new()
+                    }
+                }
+                _ => Letter::new()
+            };
+            message.push(morse_code);
+        }
+        message
+    }
+}
+
+
+
 fn main() {
     let vec_f32: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0, 1000.0, 1001.0];
     let my_median = my_median(&vec_f32);
@@ -164,4 +264,16 @@ fn main() {
     let mut usernames = vec!["alice", "Bob", "CaRol"];
     courses_sort_usernames_v2(&mut usernames);
     println!("Courses sort usernames v2: {:?}", usernames);
+    
+    let morse_string = String::from("abc");
+    let morse_code = morse_string.to_morse_code();
+    print!("{} in morse code is: ", morse_string);
+    print_morse_code(&morse_code);
+    
+    
+    
+    
+    
+    
+    
 }
