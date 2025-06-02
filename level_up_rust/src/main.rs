@@ -1,3 +1,6 @@
+use std::collections::HashSet;
+use std::ffi::CString;
+use std::path::Path;
 // from the LinkedIn course: https://www.linkedin.com/learning/level-up-rust
 use num::{Integer, Num};
 
@@ -70,17 +73,60 @@ fn courses_median(mut elements: Vec<f32>) -> Option<f32> {
     Some(median)
 }
 //===================================================================================
+// 2. Find unique items
+// Extra credit:
+// Use generics, use T: Ord
+// Retain order
 
+fn my_unique<T: Ord + Clone>(elements: &Vec<T>) -> Vec<T> {
+    let mut unique_elements: Vec<T> = Vec::new();
+    for element in elements.iter() {
+        if !unique_elements.contains(element) {
+            unique_elements.push((*element).clone());
+        }
+    }
+    unique_elements
+}
 
+fn courses_unique<T: Ord>(mut elements: Vec<T>) -> Vec<T> {
+    elements.sort_by(|a, b| a.partial_cmp(b).unwrap());
+    elements.dedup();
+    elements
+}
+//===================================================================================
+// 3. Print any text type
+// Write a fn that can accept a String or a &str
+// requirements:
+// implement info(text: &T)
+// Must accept at least String and &str
+// print output
 
+fn my_info<T: std::fmt::Display>(text: &T) {
+    println!("{}", text);
+}
+
+    
 fn main() {
-    let mut vec_f32: Vec<f32> = vec![1.0,2.0,3.0,4.0,1000.0,1001.0];
-    let vec_f32: Vec<f32> = vec![1.0,2.0,3.0,4.0,5.0,6.0,7.0,8.0,9.0,10.0];
+    let vec_f32: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0, 1000.0, 1001.0];
     let my_median = my_median(&vec_f32);
     let courses_median = courses_median(vec_f32);
     println!("My median f32: {:?}", my_median);
     println!("Courses median f32: {:?}", courses_median);
-    
+
+    let dups_vec: Vec<i32> = vec![1, 1, 1, 9, 9, 10];
+    let my_unique_vec: Vec<i32> = my_unique(&dups_vec);
+    let courses_unique_vec: Vec<i32> = courses_unique(dups_vec);
+    println!("My unique : {:?}", my_unique_vec);
+    println!("Courses unique : {:?}", courses_unique_vec);
+
+    let owned_string = String::from("Owned hello world");
+    let str = "hello world";
+    let c_string = CString::new("c_string").unwrap();
+    let path = Path::new("path");
+    my_info(&owned_string);
+    my_info(&str);
+    my_info(&c_string.to_str().unwrap());
+    my_info(&path.to_str().unwrap());
     
     
     
