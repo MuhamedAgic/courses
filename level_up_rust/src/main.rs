@@ -231,7 +231,72 @@ impl MorseCode for String {
     }
 }
 
+//===================================================================================
+// 6. value hand of cards
+// requirements: use types given in sample code
+// implement value method for the hand struct
+// 1..10 face cards are 10, a = 11 or if val > 21 -> 1
+enum Card {
+    One,
+    Two,
+    Three,
+    Four,
+    Five,
+    Six,
+    Seven,
+    Eight,
+    Nine,
+    Ten,
+    K,
+    Q,
+    J,
+    A
+}
 
+struct Hand {
+    cards: Vec<Card>
+}
+
+impl Hand {
+    fn value(&self) -> usize {
+        let mut value: usize = 0;
+        let mut present_as = 0; // they call it aces_seen
+        for card in self.cards.iter() {
+            let val = match card { 
+                Card::One => 1,
+                Card::Two => 2,
+                Card::Three => 3,
+                Card::Four => 4,
+                Card::Five => 5,
+                Card::Six => 6,
+                Card::Seven => 7,
+                Card::Eight => 8,
+                Card::Nine => 9,
+                Card::Ten => 10,
+                Card::K => 10,
+                Card::Q => 10,
+                Card::J => 10,
+                Card::A => {
+                    present_as += 1;
+                    0
+                },
+            };
+            value += val;
+        }
+         for i in 0..present_as {
+             if value > 21 {
+                 value += 1;
+             } else { 
+                 value += 11;
+             }
+         }
+        value
+    }
+}
+
+
+
+//===================================================================================
 
 fn main() {
     let vec_f32: Vec<f32> = vec![1.0, 2.0, 3.0, 4.0, 1000.0, 1001.0];
@@ -269,8 +334,14 @@ fn main() {
     let morse_code = morse_string.to_morse_code();
     print!("{} in morse code is: ", morse_string);
     print_morse_code(&morse_code);
+    println!();
     
-    
+    let hand = vec![Card::A, Card::Ten, Card::Three, Card::Four, Card::Five];
+    let hand = Hand { cards: hand };
+    println!("Hand has value: {}", hand.value());
+    let hand = vec![Card::A, Card::Four, Card::Five];
+    let hand = Hand { cards: hand };
+    println!("Hand has value: {}", hand.value());
     
     
     
