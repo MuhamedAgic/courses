@@ -358,6 +358,26 @@ impl Temparature {
     }
 }
 
+//===================================================================================
+// 9. sum list with missing values
+
+fn sum_with_missing(elements: Vec<Option<i32>>) -> i32 {
+    let mut sum = 0;
+    for element in elements {
+        if let Some(element) = element {
+            sum += element;
+        }
+    }
+    sum
+}
+
+fn sum_with_missing_v2(elements: Vec<Option<i32>>) -> i32 {
+    elements
+        .iter()
+        .map(|e| e.unwrap_or_default())
+        .sum::<i32>()
+}
+
 
 //===================================================================================
 
@@ -413,5 +433,11 @@ fn main() {
     println!("Temparature is degrees Celsius: {:?}", t);
     t.to_farenheit();
     println!("Temparature is Farenheit: {:?}", t);
-    
+
+    let vec: Vec<Option<i32>> = vec![Some(1), Some(10), None, Some(1000)];
+    let sum_missing = sum_with_missing_v2(vec);
+    println!("Sum missing value: {}", sum_missing);
+    let vec: Vec<Option<i32>> = vec![None, None, None, None];
+    let sum_missing = sum_with_missing_v2(vec);
+    println!("Sum missing value: {}", sum_missing);
 }
