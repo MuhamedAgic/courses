@@ -3,9 +3,8 @@
 use std::ffi::CString;
 use std::fmt::Debug;
 use std::fs;
-use std::fs::{File, OpenOptions};
 use std::path::Path;
-use std::str::FromStr;
+use std::str::{Chars, FromStr};
 use chrono::{DateTime, Local, NaiveDate, Weekday};
 
 // 1. Calulate the median
@@ -481,7 +480,7 @@ impl std::fmt::Display for IsbnError {
 }
 
 //===================================================================================
-// 11. validate file exists
+// 12. validate file exists
 trait FileMetadata {
     fn exists(&self) -> bool;
     fn is_writable(&self) -> bool;
@@ -503,7 +502,7 @@ impl FileMetadata for std::path::Path {
 }
 
 //===================================================================================
-// 12. interpret rgb hex color
+// 13. interpret rgb hex color
 // parse string to rust type color
 // requirements: datastructure rgb
 // implement rgb channels using trait from sample code
@@ -540,7 +539,56 @@ impl FromStr for Rgb {
 
 
 //===================================================================================
-// 13. run length encoding
+// 14. run length encoding
+// requirements:
+// string to encoded
+// encoded to string
+// str -> encode -> decode -> must be original str
+// AAAAAaAA -> 5A1a2A
+
+fn encode(s: &str) -> String {
+    if s.is_empty() {
+        return String::new();
+    }
+    
+    let mut encoded_s = String::from("");
+    let mut current_char = s.chars().next().unwrap();
+    let mut current_char_count = 0;
+    
+    for (i, char) in s.chars().enumerate() {
+        if char == current_char {
+            current_char_count += 1;   
+        } else {
+            encoded_s.push_str(&format!("{}{}", current_char_count.to_string(), current_char));
+            current_char = char;
+            current_char_count = 1;
+        }
+        if i == s.len() - 1{
+            encoded_s.push_str(&format!("{}{}", current_char_count.to_string(), current_char));
+        }
+    }
+    encoded_s
+}
+
+fn decode(s: &str) -> String {
+    if s.is_empty() {
+        return String::new();
+    }
+
+    let mut decoded_s = String::from("");
+    let mut current_char_count = 0;
+
+    for char in s.chars() {
+        if let Some(count) = char.to_digit(10) {
+            current_char_count = count;
+        } else { 
+            for i in 0..current_char_count {
+                decoded_s.push_str(char.to_string().as_str());
+            }
+        }
+    }
+    decoded_s
+}
 
 
 //===================================================================================
@@ -624,6 +672,12 @@ fn main() {
     // let color = String::from("3g9841");
     let rgb = Rgb::from_str(&color);
     println!("Parsed Rgb: {:?}", rgb);
+    
+    let str = "AAAAAaaAbCCCdd";
+    let encoded_str = encode(str);
+    println!("Encoded str: {}", encoded_str);
+    let decoded_str = decode(&encoded_str);
+    println!("Decoded str: {}", &decoded_str);
     
     
 }
