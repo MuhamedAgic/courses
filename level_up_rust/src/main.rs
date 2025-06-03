@@ -1,11 +1,13 @@
 // from the LinkedIn course: https://www.linkedin.com/learning/level-up-rust
 
+use std::collections::{HashMap, HashSet};
 use std::ffi::CString;
 use std::fmt::Debug;
 use std::fs;
 use std::path::Path;
 use std::str::{Chars, FromStr};
 use chrono::{DateTime, Local, NaiveDate, Weekday};
+use regex::Regex;
 
 // 1. Calulate the median
 fn my_median(elements: &Vec<f32>) -> Option<f32> {
@@ -13,7 +15,7 @@ fn my_median(elements: &Vec<f32>) -> Option<f32> {
     if elements.len() == 0 {
         return None;
     }
-    
+
     let mut sorted = elements.clone();
     sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
 
@@ -60,19 +62,19 @@ fn courses_median(mut elements: Vec<f32>) -> Option<f32> {
     if elements.is_empty() {
         return None;
     }
-    
+
     elements.sort_by(|a, b| a.partial_cmp(b).unwrap());
     let n_elements = elements.len();
     let middle = n_elements / 2;
     let elements_is_even = n_elements % 2 == 0;
-    
+
     // more idiomatic rust
     let median = if elements_is_even {
         (elements[middle] + elements[middle - 1]) / 2.0
-    } else { 
+    } else {
         elements[middle]
     };
-    
+
     Some(median)
 }
 //===================================================================================
@@ -131,7 +133,7 @@ fn courses_sort_usernames<T: AsRef<str>>(users: &mut Vec<T>) {
 }
 
 fn courses_sort_usernames_v2<T: AsRef<str>>(users: &mut Vec<T>) {
-    users.sort_by_cached_key(|a| { 
+    users.sort_by_cached_key(|a| {
         a.as_ref().to_lowercase()  // cached key: once per item in list
     });
 }
@@ -203,14 +205,14 @@ fn print_morse_code(morse_code: &Message) {
         print!(" ");
     }
 }
-    
+
 
 // my version
 impl MorseCode for String {
     fn to_morse_code(&self) -> Message {
         let mut message = Message::new();
         for char in self.chars() {
-            let morse_code = match char { 
+            let morse_code = match char {
                 'a'..'z' => {
                     if let Some(letter) = letter_to_pulse_code(char) {
                         letter
@@ -265,7 +267,7 @@ impl Hand {
         let mut value: usize = 0;
         let mut present_as = 0; // they call it aces_seen
         for card in self.cards.iter() {
-            let val = match card { 
+            let val = match card {
                 Card::One => 1,
                 Card::Two => 2,
                 Card::Three => 3,
@@ -289,7 +291,7 @@ impl Hand {
          for i in 0..present_as {
              if value > 21 {
                  value += 1;
-             } else { 
+             } else {
                  value += 11;
              }
          }
@@ -303,7 +305,7 @@ impl Hand {
 // Design importantEvent data structure
 // must have name and date fields
 // implement Deadline trait for ImportantEvent
-// use chrono 
+// use chrono
 
 struct ImportantEvent {
     name: String,
@@ -413,7 +415,7 @@ fn calculate_isbn_checksum(digits: &Vec<u8>) -> Option<u8> {
     if digits.is_empty() {
         return None;
     }
-    
+
     let weighted_sum = digits
         .iter()
         .enumerate()
@@ -431,13 +433,13 @@ fn calculate_isbn_checksum(digits: &Vec<u8>) -> Option<u8> {
 }
 impl FromStr for Isbn {
     type Err = IsbnError;
-    
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut digits: Vec<u8> = s
             .chars()
             .filter_map(|c| c.to_digit(10).map(|d| d as u8))
             .collect();
-        
+
         if digits.len() > 13 {
             return Err(IsbnError::TooLong)
         } else if digits.len() < 13 {
@@ -446,18 +448,18 @@ impl FromStr for Isbn {
 
         // remove the hyphens
         let last_digit = digits.pop();
-        
+
         let isbn_checksum = calculate_isbn_checksum(&digits);
         if isbn_checksum.is_none() {
             return Err(IsbnError::InvalidChecksum)
         }
-        
-        if isbn_checksum.unwrap() > 9 
-            || isbn_checksum.unwrap() < 0 
+
+        if isbn_checksum.unwrap() > 9
+            || isbn_checksum.unwrap() < 0
             || last_digit != isbn_checksum {
             return Err(IsbnError::InvalidChecksum)
         }
-        
+
         Ok(Isbn {raw: s.to_string(), digits: digits})
     }
 }
@@ -525,7 +527,7 @@ impl FromStr for Rgb {
     type Err = ParseColorError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let hex = s.strip_prefix("#").ok_or(ParseColorError::NoLeadningHash)?;
-        
+
         if hex.len() != 6 {
             return Err(ParseColorError::InvalidHexLength);
         }
@@ -550,14 +552,14 @@ fn encode(s: &str) -> String {
     if s.is_empty() {
         return String::new();
     }
-    
+
     let mut encoded_s = String::from("");
     let mut current_char = s.chars().next().unwrap();
     let mut current_char_count = 0;
-    
+
     for (i, char) in s.chars().enumerate() {
         if char == current_char {
-            current_char_count += 1;   
+            current_char_count += 1;
         } else {
             encoded_s.push_str(&format!("{}{}", current_char_count.to_string(), current_char));
             current_char = char;
@@ -581,7 +583,7 @@ fn decode(s: &str) -> String {
     for char in s.chars() {
         if let Some(count) = char.to_digit(10) {
             current_char_count = count;
-        } else { 
+        } else {
             for i in 0..current_char_count {
                 decoded_s.push_str(char.to_string().as_str());
             }
@@ -590,6 +592,36 @@ fn decode(s: &str) -> String {
     decoded_s
 }
 
+//===================================================================================
+// 15. Vigenere cipher
+// requirements:
+// implement vigenere:decrypt function
+// key: WHYRUST
+
+fn decrypt_vigenere(s: &str, key: &str) -> String {
+    // line up key with message
+    let letters = 'a'..'z';
+    let mut decyphered_msg = String::from("");
+    let mut idx = 0;
+    for char in s.chars() {
+        // for every letter in msg, search row for letter in msg and col for key
+        // intersection is decyphered text
+        if char == ' ' {
+            decyphered_msg.push(' ');
+            continue;
+        }
+        let msg_lower = char.to_ascii_lowercase();
+        let msg_index = msg_lower as u32 - 'a' as u32;
+        let key_char = key.chars().nth(idx).unwrap().to_ascii_lowercase();
+        let key_index = key_char as u32 - 'a' as u32;
+        let decrypted_index = (msg_index + 26 - key_index) % 26; // +26 to avoid negative underflow
+        let decrypted_char = (decrypted_index as u8 + b'a') as char;
+        decyphered_msg.push(decrypted_char);
+        idx += 1;
+        idx %= key.len();
+    }
+    decyphered_msg
+}
 
 //===================================================================================
 
@@ -614,7 +646,7 @@ fn main() {
     my_info(&str);
     my_info(&c_string.to_str().unwrap());
     my_info(&path.to_str().unwrap());
-    
+
     let mut usernames = vec!["alice", "Bob", "CaRol"];
     my_sort_usernames(&mut usernames);
     println!("My sort usernames: {:?}", usernames);
@@ -624,23 +656,23 @@ fn main() {
     let mut usernames = vec!["alice", "Bob", "CaRol"];
     courses_sort_usernames_v2(&mut usernames);
     println!("Courses sort usernames v2: {:?}", usernames);
-    
+
     let morse_string = String::from("abc");
     let morse_code = morse_string.to_morse_code();
     print!("{} in morse code is: ", morse_string);
     print_morse_code(&morse_code);
     println!();
-    
+
     let hand = vec![Card::A, Card::Ten, Card::Three, Card::Four, Card::Five];
     let hand = Hand { cards: hand };
     println!("Hand has value: {}", hand.value());
     let hand = vec![Card::A, Card::Four, Card::Five];
     let hand = Hand { cards: hand };
     println!("Hand has value: {}", hand.value());
-    
+
     let ie = ImportantEvent{name: "Jack".to_string(), date: Local::now()};
     println!("Is passed event? {}", ie.is_passed());
-    
+
     let mut t = Temparature {degrees: 3.14, scale: Scale::Celcius};
     println!("Temparature is degrees Celsius: {:?}", t);
     t.to_farenheit();
@@ -661,7 +693,7 @@ fn main() {
     let isbn = Isbn::from_str("1999-01-01-0023401324-0123413240");
     let isbn = Isbn::from_str("978-3-16-148410-0");
     println!("Isbn number parsed: {:?}", isbn);
-    
+
     let path_to_file = std::path::Path::new("./src/a.txt");
     println!("Does file exist? {}" , path_to_file.exists());
     println!("Is file readable? {}" , path_to_file.is_readable());
@@ -672,12 +704,16 @@ fn main() {
     // let color = String::from("3g9841");
     let rgb = Rgb::from_str(&color);
     println!("Parsed Rgb: {:?}", rgb);
-    
+
     let str = "AAAAAaaAbCCCdd";
     let encoded_str = encode(str);
     println!("Encoded str: {}", encoded_str);
     let decoded_str = decode(&encoded_str);
     println!("Decoded str: {}", &decoded_str);
-    
+
+    let encrypted = "PVC DJG PAY CMY JRK UC";
+    let key = "WHYRUST";
+    println!("Encrypted str: {}", encrypted);
+    println!("Decrypted str: {}", decrypt_vigenere(&encrypted, &key));
     
 }
